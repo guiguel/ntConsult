@@ -30,14 +30,14 @@ public class Program {
 
 	public static void main(String[] args) throws ParseException, FileNotFoundException, IOException, InterruptedException {
 		
-		File arquivos[];
-		File diretorioCaminho = new File("HOMEPATH/data/in");
-		//File diretorioCaminho = new File("C:\\Users\\guigu\\Desktop\\Java\\data\\in");
-		//File diretorioCaminhoSaida = new File("C:\\Users\\guigu\\Desktop\\Java\\data\\out");
-		File diretorioCaminhoSaida = new File("HOMEPATH/data/in");
 		String STRING_DELIMITER = "ç";
 		String TRACE_DELIMITER = "-";
 		String COMMA_DELIMITER = ",";
+		VendasService vendasService = new VendasService();		
+		
+		File arquivos[];
+		File diretorioCaminho = new File(vendasService.getCaminhoEntrada());		
+		File diretorioCaminhoSaida = new File(vendasService.getCaminhoSaida());			
 		
 		String piorVendedor="";
 		
@@ -50,9 +50,8 @@ public class Program {
 				
 		WatchService watcher = FileSystems.getDefault().newWatchService();
 	    //Diretório que será verificado se o arquivo foi criado
-	    Path diretorio = Paths.get("HOMEPATH/data/in");
-	    //Path diretorio = Paths.get("C:\\Users\\guigu\\Desktop\\Java\\data\\in");
-	    
+	    Path diretorio = Paths.get(vendasService.getCaminhoEntrada());
+	    	    
 	    //registra o serviço criado
 	    diretorio.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
 	     
@@ -67,14 +66,10 @@ public class Program {
 		             continue;
 	             }
 	        	 
-	             Path path = (Path) watchEvent.get().context();
+	             //Path path = (Path) watchEvent.get().context();
 	          
 	             //arquivos = path.getFileName().toFile();
-	             
-	            //Verifica se o arquivo possui a extensão csv
-	             /* if (FilenameUtils.getExtension(path.toString()).equalsIgnoreCase("csv")) { 
-	                 System.out.println(path);
-	             }*/
+	            
 	         }
 
 	         
@@ -83,12 +78,10 @@ public class Program {
 	             break;
 	         }
 	         
-	         arquivos = diretorioCaminho.listFiles();
-	         VendasService vendasService = new VendasService();
+	         arquivos = diretorioCaminho.listFiles();	                 
 	         
-	         
-	         for(int i = 0; i < arquivos.length; i++){
-	        	 if (arquivos[i].getName().endsWith("csv")) {
+	         for(int i = 0; i < arquivos.length; i++){ 
+	        	 if (arquivos[i].getName().endsWith("csv")) {//verifica se extensão do arquivo é csv
 					 if(!vendasService.verificaArquivo(arquivos[i].getName())) {
 						 try (BufferedReader br = new BufferedReader(new FileReader(arquivos[i]))) {
 							
@@ -119,10 +112,12 @@ public class Program {
 						    		 String[] linhas = values[2].split(COMMA_DELIMITER);
 						    		
 						    		 int codVenda =  Integer.parseInt(values[1]);
-						    		 String nome = values[3];
-						    		 piorVendedor = nome;
+						    		 String nome = values[3];						    		 
 						    		
 						    		 for(int cont = 0; cont<linhas.length; cont++) {
+						    			 if (i == 1 ) {
+						    				 piorVendedor = nome;
+						    			 }
 						    			
 						    			 String[] vendas = linhas[cont].split(TRACE_DELIMITER);
 						    			 int codItem = Integer.parseInt(vendas[0]);
@@ -134,7 +129,11 @@ public class Program {
 						    			 listVendas.add(new Vendas(codVenda, codItem, totItem, preco, nome));
 						    		 }
 						    		 if (valorAtual < maiorValor) {
-						    			 piorVendedor = nome;				    			
+						    			 piorVendedor = nome;
+						    			 maiorValor = valorAtual;
+						    		 } else {
+						    			 maiorValor = valorAtual;
+						    			 piorVendedor = nome;
 						    		 }
 						    	 }
 								
@@ -153,7 +152,7 @@ public class Program {
 								 bw.newLine();
 								 bw.write("Pior Vendedor=" + piorVendedor);											
 								
-								 System.out.println(targetFileStr + " CREATED!");						
+								 System.out.println(targetFileStr + " CREATED!!!");						
 													
 						     } catch (IOException e) {
 						    	 System.out.println("Error writing file: " + e.getMessage());
